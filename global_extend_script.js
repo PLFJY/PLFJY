@@ -62,7 +62,7 @@ const customProxyGroups = [
      * - 为空数组：不剔除
      * - 有值时：只要 server 包含任一关键字，就从本分组中剔除
      */
-    excludeProxyServers: [],
+    excludeProxyServers: ["hk."],
     rules: [
       "DOMAIN-SUFFIX,grok.com",
       "PROCESS-NAME,codex",
@@ -99,21 +99,9 @@ const customProxyGroups = [
     ]
   },
   {
-    name: "Secrete",
-    type: "url-test",
-    rules: ["DOMAIN-SUFFIX,hanime1.me"],
-    excludeProxyNames: ["日本", "英国"],
-    remoteRuleProviders: [
-      {
-        id: "twitter",
-        url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Twitter/Twitter.yaml"
-      }
-    ]
-  },
-  {
     name: "🇯🇵 Japan",
-    type: "fallback",
-    rules: ["GEOIP,JP"],
+    type: "url-test",
+    rules: ["GEOIP,JP", "DOMAIN-SUFFIX,bbb.org"],
     /**
      * 按节点名称关键字筛选
      * - 为空数组：不启用名称筛选
@@ -125,7 +113,7 @@ const customProxyGroups = [
      * - 为空数组：不启用 server 筛选
      * - 有值时：进入筛选模式，仅保留 server 命中的节点
      */
-    includeProxyServers: ["jp"],
+    includeProxyServers: ["jp."],
     remoteRuleProviders: [
       {
         id: "niconico",
@@ -174,10 +162,13 @@ const prependRule = [
   "DOMAIN-KEYWORD,ghproxy,DIRECT",
   "DOMAIN-KEYWORD,gh-proxy,DIRECT",
   "DST-PORT,25565,DIRECT",
-  "DOMAIN-SUFFIX,crxsoso.com,DIRECT"/*,
-  "DOMAIN-SUFFIX,collegeboard.org,DIRECT",
-  "DOMAIN-SUFFIX,items-va.learnosity.com,DIRECT",
-  "DOMAIN-SUFFIX,fast.wistia.net,DIRECT"*/
+  "DOMAIN-SUFFIX,crxsoso.com,DIRECT",
+  "DOMAIN-KEYWORD,hf-mirror.com,DIRECT",
+  "DOMAIN-SUFFIX,hf.co,DIRECT",
+  "PROCESS-NAME,TTVoice.exe,DIRECT",
+  "PROCESS-NAME,AweSun.exe,DIRECT",
+  "PROCESS-NAME,tailscaled.exe,DIRECT",
+  "PROCESS-NAME,tailscale-ipn.exe,DIRECT",
 ];
 
 // 6) 需要追加的规则 (Append Rules, 会插在 MATCH 规则前)
@@ -220,8 +211,7 @@ const userDNS = {
     'stun.*.*.*',
     '+.stun.playstation.net',
     '+.msftconnecttest.com',
-    '+.msftncsi.com',
-    'pc.plfjy.top'
+    '+.msftncsi.com'
   ],
 
   defaultNameserver: [
@@ -231,6 +221,8 @@ const userDNS = {
   ],
 
   nameserver: [
+    'https://8.8.8.8/dns-query',
+    'https://1.1.1.1/dns-query',
     'https://dns.google/dns-query',
     'https://cloudflare-dns.com/dns-query',
     'https://dns.quad9.net/dns-query'
@@ -239,11 +231,13 @@ const userDNS = {
   proxyServerNameserver: [
     'https://doh.pub/dns-query',
     'https://sm2.doh.pub/dns-query',
+    'https://1.12.12.12/dns-query',
+    'https://120.53.53.53/dns-query'
   ],
 
   directNameserver: [
-    'https://doh.pub/dns-query',
     '119.29.29.29',
+    '223.5.5.5',
     '223.6.6.6',
     'system',
   ],
