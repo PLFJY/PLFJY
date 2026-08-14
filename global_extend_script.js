@@ -191,7 +191,7 @@ const userDNS = {
   enhancedMode: 'fake-ip',
   fakeIpRange: '198.18.0.1/16',
   fakeIpFilterMode: 'blacklist',
-  preferH3: true,
+  preferH3: false,
   respectRules: true,
   useHosts: false,
   useSystemHosts: false,
@@ -242,7 +242,7 @@ const userDNS = {
     'system',
   ],
 
-  directNameserverFollowPolicy: true,
+  directNameserverFollowPolicy: false,
 
   fallback: [],
 
