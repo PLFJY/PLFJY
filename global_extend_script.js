@@ -1,7 +1,7 @@
 // Clash Verge Rev Global extended script
 // Remote rule provider could be found at https://github.com/blackmatrix7/ios_rule_script/tree/master/rule/Clash
 // You just need to edit the User Configuration Region
-/*
+ /*
 |--------------------------------------------------------------------------
 | 🚀 User Configuration Region
 |--------------------------------------------------------------------------
@@ -17,12 +17,16 @@ const autoSelectName = "♻️自动选择";
 // "故障转移" 分组的名称
 const fallbackSelectName = "🛡️故障转移";
 
+// "负载均衡" 分组的名称
+const loadBalanceName = "🔮负载均衡";
+
 // 2) 内置分组检测配置
 // 内置策略组检测配置
 const builtInPolicyOptions = {
   url: "https://www.gstatic.com/generate_204",
   interval: 600,
-  tolerance: 50
+  tolerance: 50,
+  loadBalanceStrategy: "consistent-hashing"
 };
 
 // 3) 附加的 Remote Providers
@@ -41,6 +45,16 @@ const extraRemoteRuleProviders = [
     id: "mozilla",
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Mozilla/Mozilla.yaml",
     target: "DIRECT"
+  },
+  {
+    id: "tecent",
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Tencent/Tencent.yaml",
+    target: "DIRECT"
+  },
+  {
+    id: "wechat",
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/WeChat/WeChat.yaml",
+    target: "DIRECT"
   }
 ];
 
@@ -50,24 +64,19 @@ const extraRemoteRuleProviders = [
 const customProxyGroups = [
   {
     name: "💬 国外AI(Except Gemini)",
-    type: "fallback", //可选，默认 select
+    type: "select", //可选，默认 select
     /**
      * 按节点名称关键字剔除
      * - 为空数组：不剔除
      * - 有值时：只要节点名称包含任一关键字，就从本分组中剔除
      */
-    excludeProxyNames: ["香港", "剩余", "到期"],
-    /**
-     * 按 server 域名关键字剔除
-     * - 为空数组：不剔除
-     * - 有值时：只要 server 包含任一关键字，就从本分组中剔除
-     */
-    excludeProxyServers: ["hk."],
+    excludeProxyNames: ["香港", "剩余", "到期", "HK"],
     rules: [
       "DOMAIN-SUFFIX,grok.com",
       "PROCESS-NAME,codex",
       "DOMAIN-SUFFIX,x.ai",
-      "PROCESS-NAME,codex.exe"
+      "PROCESS-NAME,codex.exe",
+      `DOMAIN-SUFFIX,chatgpt.site,${currentSelectName}`
     ], // 本地 rules
     remoteRuleProviders: [
       {
@@ -85,6 +94,10 @@ const customProxyGroups = [
       {
         id: "claude",
         url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Claude/Claude.yaml"
+      },
+      {
+        id: "twitter",
+        url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Twitter/Twitter.yaml"
       }
     ]
   },
@@ -101,7 +114,7 @@ const customProxyGroups = [
   {
     name: "🇯🇵 Japan",
     type: "url-test",
-    rules: ["GEOIP,JP", "DOMAIN-SUFFIX,bbb.org"],
+    rules: ["GEOIP,JP"],
     /**
      * 按节点名称关键字筛选
      * - 为空数组：不启用名称筛选
@@ -113,7 +126,7 @@ const customProxyGroups = [
      * - 为空数组：不启用 server 筛选
      * - 有值时：进入筛选模式，仅保留 server 命中的节点
      */
-    includeProxyServers: ["jp."],
+    includeProxyServers: ["jp"],
     remoteRuleProviders: [
       {
         id: "niconico",
@@ -124,7 +137,7 @@ const customProxyGroups = [
   {
     name: "🪟 微软服务",
     type: "select",
-    proxies: ["DIRECT"],
+    proxies: null,
     remoteRuleProviders:
       [
         {
@@ -163,12 +176,13 @@ const prependRule = [
   "DOMAIN-KEYWORD,gh-proxy,DIRECT",
   "DST-PORT,25565,DIRECT",
   "DOMAIN-SUFFIX,crxsoso.com,DIRECT",
-  "DOMAIN-KEYWORD,hf-mirror.com,DIRECT",
-  "DOMAIN-SUFFIX,hf.co,DIRECT",
-  "PROCESS-NAME,TTVoice.exe,DIRECT",
-  "PROCESS-NAME,AweSun.exe,DIRECT",
-  "PROCESS-NAME,tailscaled.exe,DIRECT",
-  "PROCESS-NAME,tailscale-ipn.exe,DIRECT",
+  "DOMAIN-SUFFIX,feishu.cn,DIRECT",
+  "DOMAIN-SUFFIX,deepseek.com,DIRECT",
+  "PROCESS-NAME,AweSun,DIRECT",
+  "DOMAIN-SUFFIX,linuxdo.org,DIRECT",
+  "PROCESS-NAME,网易有道翻译,DIRECT",
+  "PROCESS-NAME,Bluebook,DIRECT",
+  "DOMAIN-SUFFIX, hf-mirror.com,DIRECT"
 ];
 
 // 6) 需要追加的规则 (Append Rules, 会插在 MATCH 规则前)
@@ -188,14 +202,14 @@ const appendRule = [
 const userDNS = {
   enable: true,
   listen: ':53',
-  enhancedMode: 'fake-ip',
+  enhancedMode: 'redir-host',
   fakeIpRange: '198.18.0.1/16',
   fakeIpFilterMode: 'blacklist',
   preferH3: false,
   respectRules: true,
   useHosts: false,
   useSystemHosts: false,
-  ipv6: false,
+  ipv6: true,
 
   fakeIpFilter: [
     '*.lan',
@@ -211,34 +225,33 @@ const userDNS = {
     'stun.*.*.*',
     '+.stun.playstation.net',
     '+.msftconnecttest.com',
-    '+.msftncsi.com'
+    '+.msftncsi.com',
+    'pc.plfjy.top',
   ],
 
   defaultNameserver: [
     '119.29.29.29',
     '223.5.5.5',
-    '223.6.6.6',
+    'system'
   ],
 
   nameserver: [
     'https://8.8.8.8/dns-query',
     'https://1.1.1.1/dns-query',
-    'https://dns.google/dns-query',
-    'https://cloudflare-dns.com/dns-query',
-    'https://dns.quad9.net/dns-query'
+    'https://9.9.9.9/dns-query'
   ],
 
   proxyServerNameserver: [
     'https://doh.pub/dns-query',
     'https://sm2.doh.pub/dns-query',
-    'https://1.12.12.12/dns-query',
-    'https://120.53.53.53/dns-query'
+    '119.29.29.29',
+    '223.5.5.5',
+    'system',
   ],
 
   directNameserver: [
     '119.29.29.29',
     '223.5.5.5',
-    '223.6.6.6',
     'system',
   ],
 
@@ -316,7 +329,7 @@ const userDNS = {
 |--------------------------------------------------------------------------
 */
 
-let proxy_group_index = 3;
+let proxy_group_index = 4;
 
 /**
  * 主函数，处理 Clash 配置
@@ -342,6 +355,7 @@ function main(config) {
     currentSelectName,
     autoSelectName,
     fallbackSelectName,
+    loadBalanceName,
     customProxyGroups,
     builtInPolicyOptions
   );
@@ -401,7 +415,7 @@ function resetOverriddenSections(config) {
  * - 避免重复执行 main 时索引错乱
  */
 function resetProxyGroupInsertIndex() {
-  proxy_group_index = 3;
+  proxy_group_index = 4;
 }
 
 /**
@@ -418,6 +432,7 @@ function createBuiltInPolicyGroups(
   currentSelectName,
   autoSelectName,
   fallbackSelectName,
+  loadBalanceName,
   customProxyGroups,
   builtInPolicyOptions
 ) {
@@ -462,7 +477,16 @@ function createBuiltInPolicyGroups(
     proxies: proxyNames.slice()
   };
 
-  config["proxy-groups"].push(currentGroup, autoGroup, fallbackGroup);
+  const loadBalanceGroup = {
+    name: loadBalanceName,
+    type: "load-balance",
+    url: builtInPolicyOptions.url,
+    interval: builtInPolicyOptions.interval,
+    strategy: builtInPolicyOptions.loadBalanceStrategy,
+    proxies: proxyNames.slice()
+  };
+
+  config["proxy-groups"].push(currentGroup, autoGroup, fallbackGroup, loadBalanceGroup);
 }
 
 /**
