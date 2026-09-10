@@ -244,9 +244,6 @@ const userDNS = {
   proxyServerNameserver: [
     'https://doh.pub/dns-query',
     'https://sm2.doh.pub/dns-query',
-    '119.29.29.29',
-    '223.5.5.5',
-    'system',
   ],
 
   directNameserver: [
